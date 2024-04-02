@@ -1,4 +1,5 @@
 import { join } from 'path';
+import { writeFile } from 'fs';
 import { isEmpty } from 'lodash';
 import { _electron as electron } from '@playwright/test';
 
@@ -35,13 +36,15 @@ export async function openApp(windowsToCreate: number) {
 
 const openElectronAppOnly = async (multi: string) => {
   process.env.MULTI = `${multi}`;
-  process.env.NODE_APP_INSTANCE = `${MULTI_PREFIX}-testnet-devprod-${Date.now()}-${
-    process.env.MULTI
-  }`;
+  const app_instance = `${MULTI_PREFIX}-testnet-devprod-${Date.now()}-${multi}`;
+  process.env.NODE_APP_INSTANCE = app_instance;
   process.env.NODE_ENV = NODE_ENV;
 
   console.info('   NODE_ENV', process.env.NODE_ENV);
   console.info('   NODE_APP_INSTANCE', process.env.NODE_APP_INSTANCE);
+  writeFile(join(getAppRootPath(), 'config', `local-${app_instance}.json`), '{}', (err: Error) => {
+      if (err) throw err;
+  });
   const electronApp = await electron.launch({
     args: [join(getAppRootPath(), 'ts', 'mains', 'main_node.js')],
   });
